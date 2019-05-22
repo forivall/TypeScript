@@ -642,9 +642,9 @@ namespace ts {
         const byteOrderMarkIndicator = "\uFEFF";
 
         function getNodeSystem(): System {
-            const _fs = require("fs");
-            const _path = require("path");
-            const _os = require("os");
+            const _fs: typeof import("fs") = require("fs");
+            const _path: typeof import("path") = require("path");
+            const _os: typeof import("os") = require("os");
             // crypto can be absent on reduced node installations
             let _crypto: typeof import("crypto") | undefined;
             try {
@@ -655,8 +655,8 @@ namespace ts {
             }
 
             const Buffer: {
-                new (input: string, encoding?: string): any;
-                from?(input: string, encoding?: string): any;
+                new (input: string, encoding?: string): Buffer;
+                from?(input: string, encoding?: string): Buffer;
             } = require("buffer").Buffer;
 
             const nodeVersion = getNodeMajorVersion();
@@ -1177,13 +1177,16 @@ namespace ts {
                 return filter<string>(_fs.readdirSync(path), dir => fileSystemEntryExists(combinePaths(path, dir), FileSystemEntryKind.Directory));
             }
 
-            function realpath(path: string): string {
+            function realpath(this: System | undefined, path: string): string {
+                let result = path
                 try {
-                    return _fs.realpathSync(path);
+                    result = _fs.realpathSync(path);
                 }
-                catch {
-                    return path;
+                catch {}
+                if (!isFileSystemCaseSensitive) {
+                    result = resolveTrueCasing(path, this ? this.readDirectory : _fs.readdirSync);
                 }
+                return result;
             }
 
             function getModifiedTime(path: string) {

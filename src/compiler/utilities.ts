@@ -8530,6 +8530,19 @@ namespace ts {
         directories: emptyArray
     };
 
+    /**
+     * Get the canonical path casing of a file
+     * getDirectories will be something like `_fs.readdirSync` or `CompilerHost['getDirectories']`
+     * Make sure to bind it.
+     */
+    export function resolveTrueCasing(path: string, getDirectories: (path: string) => string[]) {
+        return getPathComponents(path).reduce((child, base, i, components) => {
+            const parentPath = getPathFromPathComponents(components.slice(0, i));
+            const directories = getDirectories(parentPath);
+            const candidates = directories.filter((candidate) => compareStringsCaseInsensitive(candidate, base) === 0)
+            return combinePaths(candidates.length === 1 ? candidates[0] : base, child);
+        });
+    }
 
     /**
      * patternStrings contains both pattern strings (containing "*") and regular strings.
